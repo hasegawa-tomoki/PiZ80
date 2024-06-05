@@ -1,0 +1,9 @@
+*.d
+*.h
+*.o
+kernel7l.elf
+kernel7l.hex
+kernel7l.img
+kernel7l.lst
+kernel7l.map
+
