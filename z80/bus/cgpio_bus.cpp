@@ -2,140 +2,178 @@
 #include "cgpio_bus.hpp"
 #include "../macros.hpp"
 
-const u8 CGpioBus::RPi_GPIO_L_A[8] = {0, 1, 2, 3, 4, 5, 6, 7};
-const u8 CGpioBus::RPi_GPIO_D[8] = {8, 9, 10, 11, 12, 13, 18, 27};
+const u8 CGpioBus::RPi_BUS_OUT[8] = {21, 26, 20, 19, 16, 13, 12, 6};
+const u8 CGpioBus::RPi_BUS_IN[8] = {5, 1, 0, 7, 8, 11, 25, 9};
 
 LOGMODULE("CGpioBus");
 
 CGpioBus::CGpioBus()
-  : m_I_RESET(RPi_GPIO_I_RESET, GPIOModeInput),
-    m_I_CLK(RPi_GPIO_I_CLK, GPIOModeInput),
-    //m_I_NMI(RPi_GPIO_I_NMI, GPIOModeInput),
-    m_I_INT(RPi_GPIO_I_INT, GPIOModeInput),
-    m_I_WAIT(RPi_GPIO_I_WAIT, GPIOModeInput),
-    m_I_BUSRQ(RPi_GPIO_I_BUSRQ, GPIOModeInput),
-    m_DATA_BUS_DIR(RPi_GPIO_DATA_BUS_DIR, GPIOModeOutput),
-    m_LE_ADDRESS_LOW(RPi_GPIO_LE_ADDRESS_LOW, GPIOModeOutput),
-    m_LE_ADDRESS_HIGH(RPi_GPIO_LE_ADDRESS_HIGH, GPIOModeOutput),
-    m_LE_CONTROL(RPi_GPIO_LE_CONTROL, GPIOModeOutput),
-    m_DATA_BUS_OE(RPi_GPIO_DATA_BUS_OE, GPIOModeOutput)
+  : m_DATA_OE(RPi_GPIO_DATA_OE, GPIOModeOutput)
 {
-    // Initialize GPIOs for Latch
-    LOGDBG("Initializing GPIOs for Latch");
-    for (int i = 0; i <= 7; i++){
-        LOGDBG("Latch A%d = GPIO %d", i, CGpioBus::RPi_GPIO_L_A[i]);
-        m_ADDR[i] = CGPIOPin(CGpioBus::RPi_GPIO_L_A[i], GPIOModeOutput);
-        m_ADDR[i].SetPullMode(GPIOPullModeOff);
-        m_ADDR[i].Write(LOW);
-    }
-    // Initialize GPIOs for Data
-    LOGDBG("Initializing GPIOs for Data");
+    // Initialize GPIOs for output
+    LOGDBG("Initializing GPIOs for output");
     for (int i = 0; i <= 7; i++) {
-        LOGDBG("Data bus D%d = GPIO %d", i, CGpioBus::RPi_GPIO_D[i]);
-        m_DATA[i] = CGPIOPin(CGpioBus::RPi_GPIO_D[i], GPIOModeInputPullDown);
-        m_DATA[i].SetPullMode(GPIOPullModeOff);
-        m_DATA[i].Write(LOW);
+        LOGDBG("  RPi.OUT%d = GPIO %d", i, CGpioBus::RPi_BUS_OUT[i]);
+        m_OUT[i] = CGPIOPin(CGpioBus::RPi_BUS_OUT[i], GPIOModeInputPullDown);
+        m_OUT[i].SetPullMode(GPIOPullModeOff);
+        m_OUT[i].Write(LOW);
     }
-    // Latch selector
-    m_LE_ADDRESS_LOW.Write(HIGH);
-    m_LE_ADDRESS_LOW.Write(LOW);
-    m_LE_ADDRESS_HIGH.Write(HIGH);
-    m_LE_ADDRESS_HIGH.Write(LOW);
-    m_LE_CONTROL.Write(HIGH);
-    m_LE_CONTROL.Write(LOW);
+    // Initialize GPIOs for input
+    LOGDBG("Initializing GPIOs for input");
+    for (int i = 0; i <= 7; i++){
+        LOGDBG("  RPi.IN%d = GPIO %d", i, CGpioBus::RPi_BUS_IN[i]);
+        m_IN[i] = CGPIOPin(CGpioBus::RPi_BUS_IN[i], GPIOModeOutput);
+        m_IN[i].SetPullMode(GPIOPullModeOff);
+        m_IN[i].Write(LOW);
+    }
+    // Data bus direction
+    // DATA_OE: high = U5 is isolated from the data bus, low: U5 is connected to the data bus
+    m_DATA_OE.Write(HIGH);
 
-    // Data bus Isolation (0: Enable 1: Isolated)
-    m_DATA_BUS_OE.Write(DATA_BUS_ISOLATED);
-    // Data bus Direction (0: input, 1: output)
-    m_DATA_BUS_DIR.Write(DATA_BUS_DIR_OUT);
-    // Input Pins
-    m_I_RESET.SetPullMode(GPIOPullModeOff);
-    m_I_CLK.SetPullMode(GPIOPullModeOff);
-    //m_I_NMI.SetPullMode(GPIOPullModeOff);
-    m_I_INT.SetPullMode(GPIOPullModeOff);
-    m_I_WAIT.SetPullMode(GPIOPullModeOff);
-    m_I_BUSRQ.SetPullMode(GPIOPullModeOff);
+    // Control pins for Output latch
+    // BA: Y0 Y1 Y2 Y3
+    //   LL: L H H H      LE of Higher 8bit of address bus
+    //   LH: H L H H      LE of Lower 8bit of address bus
+    //   HL: H H L H      LE of Outgoing control signals
+    //   HH: H H H L      LE of Data bus
+    // G: high = H H H H  To hold the latch output, Switch the GBA from H-any-any > L-target-target.
+    m_LC_OUT_A = CGPIOPin(RPi_GPIO_LC_OUT_A, GPIOModeOutput);
+    m_LC_OUT_B = CGPIOPin(RPi_GPIO_LC_OUT_B, GPIOModeOutput);
+    m_LC_OUT_G = CGPIOPin(RPi_GPIO_LC_OUT_G, GPIOModeOutput);
+    m_LC_OUT_G.Write(HIGH);
+    // Control pins for Input bus transceiver
+    // BA: Y0 Y1 Y2 Y3
+    //   LL: L H H H      Connect incoming control signals
+    //   LH: H L H H      Connect data bus
+    //   HL: H H L H      Not used
+    //   HH: H H H L      Not used
+    // G: high = H H H H  GAB = H-any-any: Isolate all signals, L-target-target: Connect the selected signals to the RPi GPIOs for input.
+    m_LC_IN_A = CGPIOPin(RPi_GPIO_LC_IN_A, GPIOModeOutput);
+    m_LC_IN_B = CGPIOPin(RPi_GPIO_LC_IN_B, GPIOModeOutput);
+    m_LC_IN_G = CGPIOPin(RPi_GPIO_LC_IN_G, GPIOModeOutput);
+    m_LC_IN_G.Write(HIGH);
 }
 
+/**
+ * @param device LATCH_ADDRESS_LOW|LATCH_ADDRESS_HIGH|LATCH_CONTROL_OUTPUT|LATCH_DATA
+ */
+void CGpioBus::latchHold(u8 device){
+    m_LC_OUT_G.Write(HIGH);
+    switch (device) {
+        case LATCH_ADDRESS_LOW:
+            m_LC_OUT_B.Write(LOW);
+            m_LC_OUT_A.Write(LOW);
+            break;
+        case LATCH_ADDRESS_HIGH:
+            m_LC_OUT_B.Write(LOW);
+            m_LC_OUT_A.Write(HIGH);
+            break;
+        case LATCH_CONTROL_OUTPUT:
+            m_LC_OUT_B.Write(HIGH);
+            m_LC_OUT_A.Write(LOW);
+            break;
+        case LATCH_DATA:
+            m_LC_OUT_B.Write(HIGH);
+            m_LC_OUT_A.Write(HIGH);
+            break;
+        default:
+            LOGPANIC("Invalid device (selectOutput)");
+            HALT()
+    }
+    m_LC_OUT_G.Write(LOW);
+}
+/**
+ * @param device BUS_TRANSCEIVER_DATA|BUS_TRANSCEIVER_CONTROL_INPUT
+ */
+void CGpioBus::selectInput(u8 device){
+    switch (device) {
+        case BUS_TRANSCEIVER_DATA:
+            m_LC_IN_B.Write(LOW);
+            m_LC_IN_A.Write(LOW);
+            break;
+        case BUS_TRANSCEIVER_CONTROL_INPUT:
+            m_LC_IN_B.Write(LOW);
+            m_LC_IN_A.Write(HIGH);
+            break;
+        default:
+            LOGPANIC("Invalid device (selectInput)");
+            HALT()
+    }
+}
+/**
+ * @param direction DATA_BUS_DIR_OUT|DATA_BUS_DIR_IN
+ */
+void CGpioBus::setDataBusDirection(bool direction){
+    m_DATA_OE.Write(LOW);
+
+    if (direction == DATA_BUS_DIR_OUT){
+        // Enable latch
+        m_DATA_OE.Write(LATCH_FOR_DATA_BUS_ENABLED);
+        // Isolate bus transceivers
+        m_LC_IN_G.Write(HIGH);
+    } else {
+        // Isolate latch
+        m_DATA_OE.Write(LATCH_FOR_DATA_BUS_ISOLATED);
+        // Enable bus transceivers
+        m_LC_IN_G.Write(LOW);
+    }
+}
+
+
 void CGpioBus::setAddress(u16 addr){
-    u32 mask = 0x000000ff;
+    u32 mask = 0;
+    for (u8 i = 0; i <= 7; i++){
+        mask |= (1 << CGpioBus::RPi_BUS_OUT[i]);
+    }
+
     // Upper 8bit of address to GPIO 0 - 7
     if ((addr & 0xff00) != (this->address & 0xff00)){
-        u32 upper = addr >> 8;
+        u32 upper = 0;
+        for (u8 i = 0; i <= 7; i++){
+            upper |= ((addr >> (i + 8)) & 0x01) << CGpioBus::RPi_BUS_OUT[i];
+        }
         CGPIOPin::WriteAll(upper, mask);
-
-        m_LE_ADDRESS_HIGH.Write(HIGH);
-        //CTimer::Get()->nsDelay(10);
-        m_LE_ADDRESS_HIGH.Write(LOW);
-        //CTimer::Get()->nsDelay(10);
+        latchHold(LATCH_ADDRESS_HIGH);
     }
     // Lower 8bit of address to GPIO 0 - 7
     if ((addr & 0x00ff) != (this->address & 0x00ff)) {
-        u32 lower = (addr & 0xff);
+        u32 lower = 0;
+        for (u8 i = 0; i <= 7; i++){
+            lower |= ((addr >> i) & 0x01) << CGpioBus::RPi_BUS_OUT[i];
+        }
         CGPIOPin::WriteAll(lower, mask);
-
-        m_LE_ADDRESS_LOW.Write(HIGH);
-        //CTimer::Get()->nsDelay(10);
-        m_LE_ADDRESS_LOW.Write(LOW);
-        //CTimer::Get()->nsDelay(10);
+        latchHold(LATCH_ADDRESS_LOW);
     }
 
     this->address = addr;
 }
 
-void CGpioBus::setDataBusOutput(){
-    if (this->currentDataBusMode != DATA_BUS_DIR_OUT){
-        this->currentDataBusMode = DATA_BUS_DIR_OUT;
-
-        for (int i = 0; i <= 7; i++) {
-            m_DATA[i].SetMode(GPIOModeOutput);
-        }
-        m_DATA_BUS_DIR.Write(DATA_BUS_DIR_OUT);
-    }
-}
-void CGpioBus::setDataBusInput(){
-    if (this->currentDataBusMode != DATA_BUS_DIR_IN){
-        this->currentDataBusMode = DATA_BUS_DIR_IN;
-
-        for (int i = 0; i <= 7; i++) {
-            m_DATA[i].SetMode(GPIOModeInputPullDown);
-        }
-        m_DATA_BUS_DIR.Write(DATA_BUS_DIR_IN);
-    }
-}
-
 void CGpioBus::setDataBegin(u8 data){
-    setDataBusOutput();
+    setDataBusDirection(DATA_BUS_DIR_OUT);
 
-    m_DATA_BUS_OE.Write(DATA_BUS_ENABLED);
-    //u32 mask = 0x0000ff00;
     u32 mask = 0;
     for (u8 i = 0; i <= 7; i++){
-        mask |= (1 << CGpioBus::RPi_GPIO_D[i]);
+        mask |= (1 << CGpioBus::RPi_BUS_OUT[i]);
     }
     u32 dataBits = 0;
     for (u8 i = 0; i <= 7; i++){
-        dataBits |= ((data >> i) & 0x01) << CGpioBus::RPi_GPIO_D[i];
+        dataBits |= ((data >> i) & 0x01) << CGpioBus::RPi_BUS_OUT[i];
     }
-    //CGPIOPin::WriteAll(data << 8, mask);
     CGPIOPin::WriteAll(dataBits, mask);
 }
 
 void CGpioBus::setDataEnd(){
-    m_DATA_BUS_OE.Write(DATA_BUS_ISOLATED);
 }
 
 u8 CGpioBus::getData(){
-    setDataBusInput();
+    setDataBusDirection(DATA_BUS_DIR_IN);
+    selectInput(BUS_TRANSCEIVER_DATA);
 
-    m_DATA_BUS_OE.Write(DATA_BUS_ENABLED);
     u32 bits = CGPIOPin::ReadAll();
-    //u8 data = 0x000000ff & (bits >> 8);
     u8 data = 0;
     for (u8 i = 0; i <= 7; i++){
-        data |= ((bits >> CGpioBus::RPi_GPIO_D[i]) & 0x01) << i;
+        data |= ((bits >> CGpioBus::RPi_BUS_IN[i]) & 0x01) << i;
     }
-    m_DATA_BUS_OE.Write(DATA_BUS_ISOLATED);
 
     return data;
 }
@@ -157,22 +195,23 @@ void CGpioBus::setControl(u8 z80PinName, bool level){
 }
 
 bool CGpioBus::getInput(u8 z80PinName){
+    u32 bits = CGPIOPin::ReadAll();
+
     switch (z80PinName){
-        case Z80_PIN_I_CLK:
-            return m_I_CLK.Read();
-        case Z80_PIN_I_INT:
-            return m_I_INT.Read();
-        case Z80_PIN_I_NMI:
-            //return m_I_NMI.Read();
-            return true;
         case Z80_PIN_I_WAIT:
-            return m_I_WAIT.Read();
+            return (bits >> CGpioBus::RPi_BUS_IN[0]) & 0x01;
         case Z80_PIN_I_BUSRQ:
-            return m_I_BUSRQ.Read();
+            return (bits >> CGpioBus::RPi_BUS_IN[1]) & 0x01;
         case Z80_PIN_I_RESET:
-            return m_I_RESET.Read();
+            return (bits >> CGpioBus::RPi_BUS_IN[2]) & 0x01;
+        case Z80_PIN_I_INT:
+            return (bits >> CGpioBus::RPi_BUS_IN[3]) & 0x01;
+        case Z80_PIN_I_NMI:
+            return (bits >> CGpioBus::RPi_BUS_IN[4]) & 0x01;
+        case Z80_PIN_I_CLK:
+            return (bits >> CGpioBus::RPi_BUS_IN[5]) & 0x01;
         default:
-            LOGPANIC("Invalid Z80 pin (setControl)");
+            LOGPANIC("Invalid Z80 pin (getInput)");
             HALT()
     }
 }
@@ -188,18 +227,20 @@ void CGpioBus::syncControl(){
     if (this->pin_o_iorq){ control |= (1 << L_IORQ); }
     if (this->pin_o_busack){ control |= (1 << L_BUSACK); }
 
-    CGPIOPin::WriteAll(control, 0xff);
+    u32 mask = 0;
+    for (u8 i = 0; i <= 7; i++){
+        mask |= (1 << CGpioBus::RPi_BUS_OUT[i]);
+    }
+    u32 bits = 0;
+    for (u8 i = 0; i <= 7; i++){
+        bits |= ((control >> i) & 0x01) << CGpioBus::RPi_BUS_OUT[i];
+    }
 
-    m_LE_CONTROL.Write(HIGH);
-    m_LE_CONTROL.Write(LOW);
+    CGPIOPin::WriteAll(bits, mask);
+    latchHold(LATCH_CONTROL_OUTPUT);
 }
 
 void CGpioBus::waitClockRising(){
-    return;
-    if (m_I_CLK.Read()){
-        while(m_I_CLK.Read());
-    }
-    while (! m_I_CLK.Read());
 
     //LOGDBG("Clock rising edge detected.");
 
@@ -212,11 +253,6 @@ void CGpioBus::waitClockRising(){
      */
 }
 void CGpioBus::waitClockFalling(){
-    return;
-    if (! m_I_CLK.Read()){
-        while(! m_I_CLK.Read());
-    }
-    while (m_I_CLK.Read());
 
     //LOGDBG("Clock falling edge detected.");
 
