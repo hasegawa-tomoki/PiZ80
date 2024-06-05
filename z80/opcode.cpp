@@ -984,7 +984,7 @@ void OpCode::execute(u8 opCode){
             break;
         }
         default:
-            char error[100];
+            //char error[100];
             //sprintf(error, "Invalid op code: %02x", opCode);
             LOGPANIC("Invalid op code: %02x", opCode);
             //Log::error(this->_cpu, error);
@@ -1250,7 +1250,7 @@ void OpCode::executeCb(u8 opCode) {
             break;
         }
         default:
-            char error[100];
+            //char error[100];
             //sprintf(error, "Invalid op code: CB %02x", opCode);
             LOGPANIC("Invalid op code: CB %02x", opCode);
             //Log::error(this->_cpu, error);
@@ -2588,7 +2588,7 @@ void OpCode::executeFd(u8 opCode){
             this->_cpu->special_registers.sp = this->_cpu->special_registers.iy;
             break;
         default: {
-            char error[100];
+            //char error[100];
             //sprintf(error, "Invalid op code: FD %02x", opCode);
             LOGPANIC("Invalid op code: FD %02x", opCode);
             //Log::error(this->_cpu, error);
@@ -2609,7 +2609,7 @@ u8* OpCode::targetRegister(u8 opCode, int lsb) const {
         case 0b101: { /*Log::target_register(this->_cpu, "l");*/ return &(this->_cpu->registers.l); }
         case 0b111: { /*Log::target_register(this->_cpu, "a");*/ return &(this->_cpu->registers.a); }
         default:
-            char error[100];
+            //char error[100];
             //sprintf(error, "Invalid target register code: %02x with lsb %d (reg_idx: %01x)", opCode, lsb, reg_idx);
             LOGPANIC("Invalid target register code: %02x with lsb %d (reg_idx: %01x)", opCode, lsb, reg_idx);
             //Log::error(this->_cpu, error);
