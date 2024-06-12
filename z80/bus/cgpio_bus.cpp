@@ -60,11 +60,11 @@ CGpioBus::CGpioBus()
 void CGpioBus::latchHold(u8 device){
     m_LC_OUT_G.Write(HIGH);
     switch (device) {
-        case LATCH_ADDRESS_LOW:
+        case LATCH_ADDRESS_HIGH:
             m_LC_OUT_B.Write(LOW);
             m_LC_OUT_A.Write(LOW);
             break;
-        case LATCH_ADDRESS_HIGH:
+        case LATCH_ADDRESS_LOW:
             m_LC_OUT_B.Write(LOW);
             m_LC_OUT_A.Write(HIGH);
             break;
