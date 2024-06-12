@@ -14,17 +14,17 @@ CGpioBus::CGpioBus()
     LOGDBG("Initializing GPIOs for output");
     for (int i = 0; i <= 7; i++) {
         LOGDBG("  RPi.OUT%d = GPIO %d", i, CGpioBus::RPi_BUS_OUT[i]);
-        m_OUT[i] = CGPIOPin(CGpioBus::RPi_BUS_OUT[i], GPIOModeInputPullDown);
-        m_OUT[i].SetPullMode(GPIOPullModeOff);
+        m_OUT[i] = CGPIOPin(CGpioBus::RPi_BUS_OUT[i], GPIOModeOutput);
+        //m_OUT[i].SetPullMode(GPIOPullModeOff);
         m_OUT[i].Write(LOW);
     }
     // Initialize GPIOs for input
     LOGDBG("Initializing GPIOs for input");
     for (int i = 0; i <= 7; i++){
         LOGDBG("  RPi.IN%d = GPIO %d", i, CGpioBus::RPi_BUS_IN[i]);
-        m_IN[i] = CGPIOPin(CGpioBus::RPi_BUS_IN[i], GPIOModeOutput);
-        m_IN[i].SetPullMode(GPIOPullModeOff);
-        m_IN[i].Write(LOW);
+        m_IN[i] = CGPIOPin(CGpioBus::RPi_BUS_IN[i], GPIOModeInputPullDown);
+        //m_IN[i].SetPullMode(GPIOPullModeDown);
+        //m_IN[i].Write(LOW);
     }
     // Data bus direction
     // DATA_OE: high = U5 is isolated from the data bus, low: U5 is connected to the data bus
