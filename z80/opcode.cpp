@@ -1647,6 +1647,7 @@ void OpCode::executeDd(u8 opCode){
             //char error[100];
             //sprintf(error, "Invalid op code: DD %02x", opCode);
             //Log::error(this->_cpu, error);
+            LOGPANIC("Invalid op code: DD %02x", opCode);
             HALT()
         }
     }
