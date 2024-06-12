@@ -57,16 +57,6 @@ void Cpu::instructionCycle(){
     while(true) {
         if (!this->bus->getInput(Bus::Z80_PIN_I_RESET)) {
             while (!this->bus->getInput(Bus::Z80_PIN_I_RESET));
-            /*
-            time_t now = ctime.Get();
-            time_t timeAfterReset = now - lastReset;
-            LOGDBG("Time after reset: %ld", timeAfterReset);
-            if (timeAfterReset > 1){
-                LOGDBG("Resetting");
-                this->reset();
-                lastReset = now;
-            }
-             */
             LOGDBG("Reset");
             CTimer::Get()->MsDelay(200);
             this->reset();
