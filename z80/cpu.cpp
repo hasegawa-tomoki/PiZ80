@@ -33,7 +33,6 @@ void Cpu::reset()
     this->special_registers.r = 0;
     // sets the interrupt status to Mode 0
     this->interrupt_mode = 0;
-    // TODO: the address and data bus go to a high-impedance state
     // all control output signals go to the inactive state
     this->bus->pin_o_m1 = true;
     this->bus->pin_o_rfsh = true;
@@ -54,14 +53,16 @@ void Cpu::instructionCycle(){
     CTime ctime = CTime();
     time_t start = ctime.Get();
     //time_t lastReset = start;
+
     while(true) {
-        if (!this->bus->getInput(Bus::Z80_PIN_I_RESET)) {
-            while (!this->bus->getInput(Bus::Z80_PIN_I_RESET));
-            LOGDBG("Reset");
+        if (this->bus->getInput(Bus::Z80_PIN_I_RESET) == Bus::PIN_LOW) {
+            LOGDBG("Reset activated");
             CTimer::Get()->MsDelay(200);
             this->reset();
+            continue;
         }
         if (this->halt) {
+            LOGDBG("Halt");
             Mcycle::m1halt(this);
         } else if (this->enable_virtual_memory) {
             Mcycle::m1vm(this);
@@ -77,8 +78,7 @@ void Cpu::instructionCycle(){
         if (this->waitingEI > 0) {
             this->waitingEI--;
             if (this->waitingEI == 0) {
-                //Log::general(this, "INT enabled");
-                LOGDBG("INT enabled");
+                //LOGDBG("INT enabled");
                 this->iff1 = true;
                 this->iff2 = true;
             }
@@ -86,17 +86,14 @@ void Cpu::instructionCycle(){
         if (this->waitingDI > 0) {
             this->waitingDI--;
             if (this->waitingDI == 0) {
-                //Log::general(this, "INT disabled");
                 LOGDBG("INT disabled");
                 this->iff1 = false;
                 this->iff2 = false;
             }
         }
 
-        /*
         // NMI
         if ((!this->bus->getInput(Bus::Z80_PIN_I_NMI))){
-            //Log::general(this, "NMI-activated");
             LOGDBG("NMI-activated");
             this->iff2 = this->iff1;
             this->iff1 = false;
@@ -108,14 +105,11 @@ void Cpu::instructionCycle(){
             Mcycle::m3(this, this->special_registers.sp, this->special_registers.pc & 0xff);
             this->special_registers.pc = nmi_jump_addr;
         }
-         */
         // INT
         if ((!this->bus->getInput(Bus::Z80_PIN_I_INT)) && this->iff1) {
-            //Log::general(this, "INT-activated");
-            LOGDBG("INT-activated");
+            //LOGDBG("INT-activated.");
             if (!this->bus->getInput(Bus::Z80_PIN_I_BUSRQ)) {
-                //Log::general(this, "but BUSRQ is low.");
-                LOGDBG("but BUSRQ is low.");
+                LOGDBG("INT-activated but BUSRQ is low.");
             } else {
                 Mcycle::int_m1t1t2t3(this);
                 Mcycle::m1t4(this);
@@ -125,7 +119,6 @@ void Cpu::instructionCycle(){
                 this->special_registers.sp -= 2;
 
                 u8 int_vector = this->executing;
-                //Log::io_read(this, this->special_registers.pc, int_vector);
                 LOGDBG("I/O read. PC: %04x, Data: %02x", this->special_registers.pc, int_vector);
                 switch (this->interrupt_mode) {
                     case 0:
@@ -155,6 +148,7 @@ void Cpu::instructionCycle(){
             start = this->m_Timer->GetTime();
             instructions = 0;
         }
+        //LOGDBG("PC: %04x", this->special_registers.pc);
     }
     #pragma clang diagnostic pop
 }

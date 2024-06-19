@@ -144,6 +144,8 @@ u8 Mcycle::m2(Cpu* cpu, u16 addr){
     cpu->bus->waitClockRising();
     cpu->bus->setAddress(addr);
     cpu->bus->waitClockFalling();
+    //cpu->bus->setControl(Bus::Z80_PIN_O_MERQ, Bus::PIN_LOW);
+    //cpu->bus->setControl(Bus::Z80_PIN_O_RD, Bus::PIN_LOW);
     cpu->bus->pin_o_mreq = Bus::PIN_LOW;
     cpu->bus->pin_o_rd = Bus::PIN_LOW;
     cpu->bus->syncControl();
@@ -157,6 +159,8 @@ u8 Mcycle::m2(Cpu* cpu, u16 addr){
     cpu->bus->waitClockRising();
     u8 data = cpu->bus->getData();
     cpu->bus->waitClockFalling();
+    //cpu->bus->setControl(Bus::Z80_PIN_O_MERQ, Bus::PIN_HIGH);
+    //cpu->bus->setControl(Bus::Z80_PIN_O_RD, Bus::PIN_HIGH);
     cpu->bus->pin_o_mreq = Bus::PIN_HIGH;
     cpu->bus->pin_o_rd = Bus::PIN_HIGH;
     cpu->bus->syncControl();

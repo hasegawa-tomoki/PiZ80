@@ -1144,7 +1144,7 @@ void OpCode::executeCb(u8 opCode) {
             //Log::execute(this->_cpu, opCode, "rl r");
             u8* reg = this->targetRegister(opCode, 0);
             bool carry_bit = ((*reg & 0x80) > 0);
-            *reg = (*reg << 1) & 0xff | this->_cpu->registers.carry_by_val();
+            *reg = ((*reg << 1) & 0xff) | this->_cpu->registers.carry_by_val();
             this->setFlagsByRotate(*reg, carry_bit);
             break;
         }
@@ -1152,7 +1152,7 @@ void OpCode::executeCb(u8 opCode) {
             //Log::execute(this->_cpu, opCode, "rl (hl)");
             u8 value = Mcycle::m2(this->_cpu, this->_cpu->registers.hl());
             bool carry_bit = ((value & 0x80) > 0);
-            value = (value << 1) & 0xff | this->_cpu->registers.carry_by_val();
+            value = ((value << 1) & 0xff) | this->_cpu->registers.carry_by_val();
             this->setFlagsByRotate(value, carry_bit);
             Mcycle::m3(this->_cpu, this->_cpu->registers.hl(), value);
             break;
@@ -1956,7 +1956,7 @@ void OpCode::executeEd(u8 opCode){
             unsigned char nL = beforeN & 0b00001111;
             unsigned char aH = (this->_cpu->registers.a & 0b11110000) >> 4;
             unsigned char aL = this->_cpu->registers.a & 0b00001111;
-            unsigned char beforeA = this->_cpu->registers.a;
+            //unsigned char beforeA = this->_cpu->registers.a;
             unsigned char afterA = (aH << 4) | nL;
             unsigned char afterN = (aL << 4) | nH;
             this->_cpu->registers.a = afterA;
@@ -1975,7 +1975,7 @@ void OpCode::executeEd(u8 opCode){
             u8 nL = beforeN & 0b00001111;
             u8 aH = (this->_cpu->registers.a & 0b11110000) >> 4;
             u8 aL = this->_cpu->registers.a & 0b00001111;
-            u8 beforeA = this->_cpu->registers.a;
+            //u8 beforeA = this->_cpu->registers.a;
             u8 afterA = (aH << 4) | nH;
             u8 afterN = (nL << 4) | aL;
             this->_cpu->registers.a = afterA;
