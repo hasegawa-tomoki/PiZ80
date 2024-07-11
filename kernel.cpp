@@ -64,10 +64,98 @@ TShutdownMode CKernel::Run()
 
     Cpu cpu(&bus, &m_Timer);
 
+    //return ROMCheck(&cpu);
+    //return RAMCheck(&cpu);
+    //return MemoryDump(&cpu);
+
     cpu.instructionCycle();
 
     LOGPANIC("ShutdownHalt");
 	return ShutdownHalt;
+}
+
+TShutdownMode CKernel::MemoryDump(Cpu* cpu)
+{
+    u16 from = 0x0070;
+    u16 to = 0x009f;
+    for (u16 addr = from; addr <= to; addr += 16){
+        CString buffer;
+        buffer.Format("%04x ", addr);
+        for (u16 i = 0; i < 16; i++){
+            u8 data = Mcycle::m2(cpu, addr + i);
+            CString byteString;
+            byteString.Format("%02x ", data);
+            buffer.Append(byteString);
+        }
+        LOGDBG(buffer);
+    }
+    return ShutdownHalt;
+}
+
+
+TShutdownMode CKernel::ROMCheck(Cpu* cpu)
+{
+    //// ROM check
+    const u8 rom[32] = {
+            0xf3, 0x31, 0xed, 0x80, 0xc3, 0x1b, 0x00, 0xff, 0xc3, 0xc9, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff,
+            0xc3, 0x9d, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xc3, 0xc3, 0x00, 0x21, 0x00, 0x80, 0x11, 0x00,
+    };
+    int maxCount = 100;
+    for (int i = 0; i < maxCount; i++){
+        LOGDBG("Trying %d / %d", i, maxCount);
+        for (u16 address = 0; address < (u16)(sizeof rom); address++){
+            u16 data = Mcycle::m2(cpu, address);
+            if (data != rom[address]){
+                LOGDBG("ERROR Address: %04x  Data: %02x  Read: %02x", address, rom[address], data);
+                LOGPANIC("ShutdownHalt");
+                return ShutdownHalt;
+            }
+        }
+    }
+    LOGDBG("ROM check OK");
+    LOGPANIC("ShutdownHalt");
+    return ShutdownHalt;
+}
+
+TShutdownMode CKernel::RAMCheck(Cpu* cpu)
+{
+    ////// RAM flip check
+    u16 start = 0x8000;
+    u16 end = 0x80ff;
+    for (u16 data = 0; data < 0x100; data++){
+        for (u16 address = start; address <= end; address++) {
+            Mcycle::m3(cpu, address, data);
+        }
+        LOGDBG("Offset: %x", data);
+        for (u16 address = start; address <= end; address++) {
+            if (address % 16 == 0){
+                LOGDBG("    %04x ", address);
+            }
+            u8 before = Mcycle::m2(cpu, address);
+            u8 flip = ~before;
+            Mcycle::m3(cpu, address, flip);
+            u8 after = Mcycle::m2(cpu, address);
+            if (before != after){
+                if (flip == after){
+                    // OK
+                } else {
+                    LOGDBG("NG (flip != after) before: %02x flip: %02x after: %02x ", before, flip, after);
+                    LOGPANIC("ShutdownHalt");
+                    return ShutdownHalt;
+                }
+            } else {
+                LOGDBG("NG (before == after)  before: %02x  flip: %02x  after: %02x", before, flip, after);
+                LOGPANIC("ShutdownHalt");
+                return ShutdownHalt;
+            }
+            if (address == end){
+                LOGDBG("RAM access check OK");
+                break;
+            }
+        }
+    }
+    LOGPANIC("ShutdownHalt");
+    return ShutdownHalt;
 }
 /*
     //// ROM check

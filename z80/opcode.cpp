@@ -879,6 +879,7 @@ void OpCode::execute(u8 opCode){
         case 0xED: { // EXTD
             //Log::execute(this->_cpu, opCode, "EXTD");
             u8 opcode = Mcycle::m2(this->_cpu, this->_cpu->special_registers.pc);
+            //LOGDBG("PC: %04x   ED 2nd byte opcode: %02x", this->_cpu->special_registers.pc, opcode);
             this->_cpu->special_registers.pc++;
             executeEd(opcode);
             break;
@@ -2196,7 +2197,7 @@ void OpCode::executeEd(u8 opCode){
         default: {
             //char error[100];
             //sprintf(error, "Invalid op code: ED %02x", opCode);
-            LOGPANIC("Invalid op code: ED %02x", opCode);
+            LOGPANIC("Invalid op code: ED %02x   PC: %04x", opCode, this->_cpu->special_registers.pc);
             //Log::error(this->_cpu, error);
             HALT()
         }

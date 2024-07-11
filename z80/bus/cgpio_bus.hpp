@@ -23,8 +23,8 @@ public:
     bool getInput(u8 z80PinName) override;
     void syncControl() override;
 
-    void waitClockRising() override;
-    void waitClockFalling() override;
+    void waitClockRising(bool force) override;
+    void waitClockFalling(bool force) override;
 
     CGPIOPin m_OUT[8];
     CGPIOPin m_IN[8];
@@ -36,6 +36,9 @@ public:
     CGPIOPin m_LE_ADDR_HIGH;
     CGPIOPin m_LE_DATA;
     CGPIOPin m_LE_CTRL;
+
+    u8 inputMode = 99;
+    u8 dataBusDirection = 99;
 
     static const u8 RPi_BUS_OUT[8];
     static const u8 RPi_BUS_IN[8];

@@ -78,12 +78,18 @@ void CGpioBus::latchHold(u8 device){
 void CGpioBus::selectInput(u8 device){
     switch (device) {
         case BUS_TRANSCEIVER_DATA:
-            m_OE_CTRL_IN.Write(BUS_TRANSCEIVER_ISOLATED);
-            m_OE_DATA_IN.Write(BUS_TRANSCEIVER_ENABLED);
+            if (inputMode != BUS_TRANSCEIVER_DATA){
+                m_OE_CTRL_IN.Write(BUS_TRANSCEIVER_ISOLATED);
+                m_OE_DATA_IN.Write(BUS_TRANSCEIVER_ENABLED);
+                inputMode = BUS_TRANSCEIVER_DATA;
+            }
             break;
         case BUS_TRANSCEIVER_CONTROL:
-            m_OE_DATA_IN.Write(BUS_TRANSCEIVER_ISOLATED);
-            m_OE_CTRL_IN.Write(BUS_TRANSCEIVER_ENABLED);
+            if (inputMode != BUS_TRANSCEIVER_CONTROL){
+                m_OE_DATA_IN.Write(BUS_TRANSCEIVER_ISOLATED);
+                m_OE_CTRL_IN.Write(BUS_TRANSCEIVER_ENABLED);
+                inputMode = BUS_TRANSCEIVER_CONTROL;
+            }
             break;
         default:
             LOGPANIC("Invalid device (selectInput)");
@@ -95,18 +101,30 @@ void CGpioBus::selectInput(u8 device){
  */
 void CGpioBus::setDataBusDirection(u8 direction){
     if (direction == DATA_BUS_DIR_OUT){
-        // Isolate bus transceivers
-        m_OE_DATA_IN.Write(BUS_TRANSCEIVER_ISOLATED);
-        // Enable latch
-        m_OE_DATA_OUT.Write(DATA_LATCH_ENABLED);
+        if (dataBusDirection != DATA_BUS_DIR_OUT){
+            // Isolate bus transceivers
+            m_OE_DATA_IN.Write(BUS_TRANSCEIVER_ISOLATED);
+            // Enable latch
+            m_OE_DATA_OUT.Write(DATA_LATCH_ENABLED);
+
+            dataBusDirection = DATA_BUS_DIR_OUT;
+        }
     } else if (direction == DATA_BUS_DIR_IN){
-        // Isolate latch
-        m_OE_DATA_OUT.Write(DATA_LATCH_ISOLATED);
-        // Enable bus transceivers
-        m_OE_DATA_IN.Write(BUS_TRANSCEIVER_ENABLED);
-    } else {
-        m_OE_DATA_IN.Write(BUS_TRANSCEIVER_ISOLATED);
-        m_OE_DATA_OUT.Write(DATA_LATCH_ISOLATED);
+        if (dataBusDirection != DATA_BUS_DIR_IN){
+            // Isolate latch
+            m_OE_DATA_OUT.Write(DATA_LATCH_ISOLATED);
+            // Enable bus transceivers
+            m_OE_DATA_IN.Write(BUS_TRANSCEIVER_ENABLED);
+
+            dataBusDirection = DATA_BUS_DIR_IN;
+        }
+    } else if (direction == DATA_BUS_ISOLATED){
+        if (dataBusDirection != DATA_BUS_ISOLATED){
+            m_OE_DATA_IN.Write(BUS_TRANSCEIVER_ISOLATED);
+            m_OE_DATA_OUT.Write(DATA_LATCH_ISOLATED);
+
+            dataBusDirection = DATA_BUS_ISOLATED;
+        }
     }
 }
 
@@ -235,17 +253,21 @@ void CGpioBus::syncControl(){
     latchHold(LATCH_CONTROL_OUTPUT);
 }
 
-void CGpioBus::waitClockRising(){
-    // Commented out because the operating speed is significantly slow relative to the clock.
-//    if (this->getInput(Z80_PIN_I_CLK)){
-//        while(this->getInput(Z80_PIN_I_CLK));
-//    }
-//    while(! this->getInput(Z80_PIN_I_CLK));
+void CGpioBus::waitClockRising(bool force){
+    if (! force){
+        return;
+    }
+    if (this->getInput(Z80_PIN_I_CLK)){
+        while(this->getInput(Z80_PIN_I_CLK));
+    }
+    while(! this->getInput(Z80_PIN_I_CLK));
 }
-void CGpioBus::waitClockFalling(){
-    // Commented out because the operating speed is significantly slow relative to the clock.
-//    if (! this->getInput(Z80_PIN_I_CLK)){
-//        while(! this->getInput(Z80_PIN_I_CLK));
-//    }
-//    while(this->getInput(Z80_PIN_I_CLK));
+void CGpioBus::waitClockFalling(bool force){
+    if (! force){
+        return;
+    }
+    if (! this->getInput(Z80_PIN_I_CLK)){
+        while(! this->getInput(Z80_PIN_I_CLK));
+    }
+    while(this->getInput(Z80_PIN_I_CLK));
 }

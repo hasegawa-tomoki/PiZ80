@@ -18,8 +18,8 @@ public:
     virtual bool getInput(u8 z80PinName) = 0;
     virtual void syncControl() = 0;
 
-    virtual void waitClockRising() = 0;
-    virtual void waitClockFalling() = 0;
+    virtual void waitClockRising(bool force) = 0;
+    virtual void waitClockFalling(bool force) = 0;
 
     static void waitNanoSec(unsigned ns);
 
