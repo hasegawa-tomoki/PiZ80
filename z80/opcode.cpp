@@ -7,12 +7,12 @@
 #pragma ide diagnostic ignored "OCDFAInspection"
 LOGMODULE("OpCode");
 
-OpCode::OpCode() {
+OpCode::OpCode(){
     this->_cpu = nullptr;
 }
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
-OpCode::OpCode(Cpu* cpu) {
+OpCode::OpCode(Cpu* cpu){
     this->_cpu = cpu;
 }
 #pragma clang diagnostic pop
@@ -283,7 +283,7 @@ void OpCode::execute(u8 opCode){
             break;
         case 0x30: // jr nc, n
             //Log::execute(this->_cpu, opCode, "jr nc, n");
-            if (!this->_cpu->registers.FC_Carry){
+            if (! this->_cpu->registers.FC_Carry){
                 auto diff = (s8)(Mcycle::m2(this->_cpu, this->_cpu->special_registers.pc));
                 this->_cpu->special_registers.pc++;
                 this->_cpu->special_registers.pc += diff;
@@ -338,7 +338,7 @@ void OpCode::execute(u8 opCode){
             break;
         case 0x38: // jr c, n
             //Log::execute(this->_cpu, opCode, "jr c, n");
-            if (this->_cpu->registers.FC_Carry) {
+            if (this->_cpu->registers.FC_Carry){
                 auto diff = (s8)(Mcycle::m2(this->_cpu, this->_cpu->special_registers.pc));
                 this->_cpu->special_registers.pc++;
                 this->_cpu->special_registers.pc += diff;
@@ -553,7 +553,7 @@ void OpCode::execute(u8 opCode){
         }
         case 0xC0: // ret nz
             //Log::execute(this->_cpu, opCode, "ret nz");
-            if (!this->_cpu->registers.FZ_Zero) {
+            if (! this->_cpu->registers.FZ_Zero){
                 executeRet();
             }
             break;
@@ -566,7 +566,7 @@ void OpCode::execute(u8 opCode){
             break;
         case 0xC2: // jp nz, nn
             //Log::execute(this->_cpu, opCode, "jp nz, nn");
-            if (!this->_cpu->registers.FZ_Zero) {
+            if (! this->_cpu->registers.FZ_Zero){
                 this->_cpu->special_registers.pc =
                         Mcycle::m2(this->_cpu, this->_cpu->special_registers.pc) +
                         (Mcycle::m2(this->_cpu, this->_cpu->special_registers.pc + 1) << 8);
@@ -582,7 +582,7 @@ void OpCode::execute(u8 opCode){
             break;
         case 0xC4: // call nz, nn
             //Log::execute(this->_cpu, opCode, "call nz, nn");
-            if (!this->_cpu->registers.FZ_Zero) {
+            if (! this->_cpu->registers.FZ_Zero){
                 this->executeCall();
             } else {
                 this->_cpu->special_registers.pc += 2;
@@ -621,7 +621,7 @@ void OpCode::execute(u8 opCode){
             break;
         case 0xC8: // ret z
             //Log::execute(this->_cpu, opCode, "ret z");
-            if (this->_cpu->registers.FZ_Zero) {
+            if (this->_cpu->registers.FZ_Zero){
                 executeRet();
             }
             break;
@@ -631,7 +631,7 @@ void OpCode::execute(u8 opCode){
             break;
         case 0xCA: // jp z, nn
             //Log::execute(this->_cpu, opCode, "jp z, nn");
-            if (this->_cpu->registers.FZ_Zero) {
+            if (this->_cpu->registers.FZ_Zero){
                 this->_cpu->special_registers.pc =
                         Mcycle::m2(this->_cpu, this->_cpu->special_registers.pc) +
                         (Mcycle::m2(this->_cpu, this->_cpu->special_registers.pc + 1) << 8);
@@ -648,7 +648,7 @@ void OpCode::execute(u8 opCode){
         }
         case 0xCC: // call z, nn
             //Log::execute(this->_cpu, opCode, "call z, nn");
-            if (this->_cpu->registers.FZ_Zero) {
+            if (this->_cpu->registers.FZ_Zero){
                 this->executeCall();
             } else {
                 this->_cpu->special_registers.pc += 2;
@@ -670,7 +670,7 @@ void OpCode::execute(u8 opCode){
         }
         case 0xD0: // ret nc
             //Log::execute(this->_cpu, opCode, "ret nc");
-            if (!this->_cpu->registers.FC_Carry) {
+            if (! this->_cpu->registers.FC_Carry){
                 executeRet();
             }
             break;
@@ -683,7 +683,7 @@ void OpCode::execute(u8 opCode){
             break;
         case 0xD2: // jp nc, nn
             //Log::execute(this->_cpu, opCode, "jp nc, nn");
-            if (!this->_cpu->registers.FC_Carry) {
+            if (! this->_cpu->registers.FC_Carry){
                 this->_cpu->special_registers.pc =
                         Mcycle::m2(this->_cpu, this->_cpu->special_registers.pc) +
                         (Mcycle::m2(this->_cpu, this->_cpu->special_registers.pc + 1) << 8);
@@ -700,7 +700,7 @@ void OpCode::execute(u8 opCode){
         }
         case 0xD4: // call nc, nn
             //Log::execute(this->_cpu, opCode, "call nc, nn");
-            if (!this->_cpu->registers.FC_Carry) {
+            if (! this->_cpu->registers.FC_Carry){
                 this->executeCall();
             } else {
                 this->_cpu->special_registers.pc += 2;
@@ -724,7 +724,7 @@ void OpCode::execute(u8 opCode){
         }
         case 0xD8: // ret c
             //Log::execute(this->_cpu, opCode, "ret c");
-            if (this->_cpu->registers.FC_Carry) {
+            if (this->_cpu->registers.FC_Carry){
                 executeRet();
             }
             break;
@@ -744,7 +744,7 @@ void OpCode::execute(u8 opCode){
         }
         case 0xDA: // jp c, nn
             //Log::execute(this->_cpu, opCode, "jp c, nn");
-            if (this->_cpu->registers.FC_Carry) {
+            if (this->_cpu->registers.FC_Carry){
                 this->_cpu->special_registers.pc =
                         Mcycle::m2(this->_cpu, this->_cpu->special_registers.pc) +
                         (Mcycle::m2(this->_cpu, this->_cpu->special_registers.pc + 1) << 8);
@@ -761,7 +761,7 @@ void OpCode::execute(u8 opCode){
         }
         case 0xDC: // call c, nn
             //Log::execute(this->_cpu, opCode, "call c, nn");
-            if (this->_cpu->registers.FC_Carry) {
+            if (this->_cpu->registers.FC_Carry){
                 this->executeCall();
             } else {
                 this->_cpu->special_registers.pc += 2;
@@ -821,7 +821,7 @@ void OpCode::execute(u8 opCode){
         }
         case 0xE4: // call po, nn
             //Log::execute(this->_cpu, opCode, "call po, nn");
-            if (! this->_cpu->registers.FPV_ParityOverflow) {
+            if (! this->_cpu->registers.FPV_ParityOverflow){
                 this->executeCall();
             } else {
                 this->_cpu->special_registers.pc += 2;
@@ -843,7 +843,7 @@ void OpCode::execute(u8 opCode){
             break;
         case 0xE8: // ret pe
             //Log::execute(this->_cpu, opCode, "ret pe");
-            if (this->_cpu->registers.FPV_ParityOverflow) {
+            if (this->_cpu->registers.FPV_ParityOverflow){
                 executeRet();
             }
             break;
@@ -853,7 +853,7 @@ void OpCode::execute(u8 opCode){
             break;
         case 0xEA: // jp pe, nn
             //Log::execute(this->_cpu, opCode, "jp pe, nn");
-            if (this->_cpu->registers.FPV_ParityOverflow) {
+            if (this->_cpu->registers.FPV_ParityOverflow){
                 this->_cpu->special_registers.pc =
                         Mcycle::m2(this->_cpu, this->_cpu->special_registers.pc) +
                         (Mcycle::m2(this->_cpu, this->_cpu->special_registers.pc + 1) << 8);
@@ -870,7 +870,7 @@ void OpCode::execute(u8 opCode){
         }
         case 0xEC: // call pe, nn
             //Log::execute(this->_cpu, opCode, "call pe, nn");
-            if (this->_cpu->registers.FPV_ParityOverflow) {
+            if (this->_cpu->registers.FPV_ParityOverflow){
                 this->executeCall();
             } else {
                 this->_cpu->special_registers.pc += 2;
@@ -919,7 +919,7 @@ void OpCode::execute(u8 opCode){
             break;
         case 0xF4: // call p, nn
             //Log::execute(this->_cpu, opCode, "call p, nn");
-            if (! this->_cpu->registers.FS_Sign) {
+            if (! this->_cpu->registers.FS_Sign){
                 this->executeCall();
             } else {
                 this->_cpu->special_registers.pc += 2;
@@ -993,7 +993,7 @@ void OpCode::execute(u8 opCode){
     }
 }
 
-void OpCode::executeCb(u8 opCode) {
+void OpCode::executeCb(u8 opCode){
     u8 type = ((opCode & 0b11000000) >> 6);
 
     if (type == 0b00){
@@ -1009,7 +1009,7 @@ void OpCode::executeCb(u8 opCode) {
             //Log::execute(this->_cpu, opCode, "rot* r");
             value = *(this->targetRegister(opCode, 0));
         }
-        switch (sub_type) {
+        switch (sub_type){
             case 0b000: { value = cb_rlc(value); break; } // rlc
             case 0b001: { value = cb_rrc(value); break; } // rrc
             case 0b010: { value = cb_rl(value); break; } // rl
@@ -1047,7 +1047,7 @@ void OpCode::executeCb(u8 opCode) {
         //this->_cpu->registers.F_Y = getBit(5, value);
         value &= (1 << bit);
         this->_cpu->registers.FZ_Zero = (value == 0);
-        this->_cpu->registers.FS_Sign = (!this->_cpu->registers.FZ_Zero && bit == 7);
+        this->_cpu->registers.FS_Sign = (! this->_cpu->registers.FZ_Zero && bit == 7);
         this->_cpu->registers.FN_Subtract = false;
         this->_cpu->registers.FH_HalfCarry = true;
         this->_cpu->registers.FPV_ParityOverflow = this->_cpu->registers.FZ_Zero;
@@ -1667,9 +1667,9 @@ void OpCode::executeXxCb(u16 idx){
     u8 y = ((ex & 0b00111000) >> 3);
     u8 z = (ex & 0b00000111);
 
-    switch (x) {
+    switch (x){
         case 0b00: { // rot[y](iz + d)
-            switch (y) {
+            switch (y){
                 case 0b000: { value = cb_rlc(value); break; } // rlc
                 case 0b001: { value = cb_rrc(value); break; } // rrc
                 case 0b010: { value = cb_rl(value); break; } // rl
@@ -1711,7 +1711,7 @@ void OpCode::executeXxCb(u16 idx){
     // ld r[z], res y,(iz+d)
     // ld r[z], set y,(iz+d)
     if (x != 0b01 && z != 0b110){
-        switch (z) {
+        switch (z){
             case 0b000: this->_cpu->registers.b = value; break;
             case 0b001: this->_cpu->registers.c = value; break;
             case 0b010: this->_cpu->registers.d = value; break;
@@ -1724,7 +1724,7 @@ void OpCode::executeXxCb(u16 idx){
         }
     }
 
-    if (x != 0b01) {
+    if (x != 0b01){
         Mcycle::m3(this->_cpu, idx + d, value);
     }
 }
@@ -2687,7 +2687,7 @@ u8 OpCode::count1(u8 data){
 
 bool OpCode::parity(u8 data){
     u8 nb_one_bits = 0;
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 8; i++){
         nb_one_bits += ((data >> i) & 1);
     }
     return (nb_one_bits & 1) == 0;

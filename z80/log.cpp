@@ -15,7 +15,7 @@ void Log::write(char* string){
 #endif //Z80EMU_ENABLE_LOG
 }
 
-void Log::dump_registers(Cpu *cpu) {
+void Log::dump_registers(Cpu *cpu){
     char buffer[400];
     snprintf(buffer, sizeof(buffer),
              "type:registers\t\t\taf:%04x bc:%04x de:%04x hl:%04x i:%02x r:%02x ix:%04x iy:%04x sp:%04x pc:%04x / FC:%s FN:%s FP/V:%s FH:%s FZ:%s FS:%s",

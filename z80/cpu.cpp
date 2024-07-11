@@ -52,19 +52,18 @@ void Cpu::instructionCycle(){
     int instructions = 0;
     CTime ctime = CTime();
     time_t start = ctime.Get();
-    //time_t lastReset = start;
 
-    while(true) {
-        if (this->bus->getInput(Bus::Z80_PIN_I_RESET) == Bus::PIN_LOW) {
+    while(true){
+        if (this->bus->getInput(Bus::Z80_PIN_I_RESET) == Bus::PIN_LOW){
             LOGDBG("Reset activated");
             CTimer::Get()->MsDelay(200);
             this->reset();
             continue;
         }
-        if (this->halt) {
+        if (this->halt){
             LOGDBG("Halt");
             Mcycle::m1halt(this);
-        } else if (this->enable_virtual_memory) {
+        } else if (this->enable_virtual_memory){
             Mcycle::m1vm(this);
         } else {
             Mcycle::m1t1(this);
@@ -75,17 +74,17 @@ void Cpu::instructionCycle(){
         this->opCode.execute(this->executing);
 
         // Disable / Enable interrupt
-        if (this->waitingEI > 0) {
+        if (this->waitingEI > 0){
             this->waitingEI--;
-            if (this->waitingEI == 0) {
+            if (this->waitingEI == 0){
                 //LOGDBG("INT enabled");
                 this->iff1 = true;
                 this->iff2 = true;
             }
         }
-        if (this->waitingDI > 0) {
+        if (this->waitingDI > 0){
             this->waitingDI--;
-            if (this->waitingDI == 0) {
+            if (this->waitingDI == 0){
                 //LOGDBG("INT disabled");
                 this->iff1 = false;
                 this->iff2 = false;
@@ -93,7 +92,7 @@ void Cpu::instructionCycle(){
         }
 
         // NMI
-        if ((!this->bus->getInput(Bus::Z80_PIN_I_NMI))){
+        if ((! this->bus->getInput(Bus::Z80_PIN_I_NMI))){
             LOGDBG("NMI-activated");
             this->iff2 = this->iff1;
             this->iff1 = false;
@@ -106,8 +105,8 @@ void Cpu::instructionCycle(){
             this->special_registers.pc = nmi_jump_addr;
         }
         // INT
-        if ((!this->bus->getInput(Bus::Z80_PIN_I_INT)) && this->iff1) {
-            if (!this->bus->getInput(Bus::Z80_PIN_I_BUSRQ)) {
+        if ((! this->bus->getInput(Bus::Z80_PIN_I_INT)) && this->iff1){
+            if (! this->bus->getInput(Bus::Z80_PIN_I_BUSRQ)){
                 LOGDBG("INT-activated but BUSRQ is low.");
             } else {
                 //LOGDBG("INT-activated.");
@@ -120,7 +119,7 @@ void Cpu::instructionCycle(){
 
                 u8 int_vector = this->executing;
                 //LOGDBG("PC: %04x  Int vector: %02x", this->special_registers.pc, int_vector);
-                switch (this->interrupt_mode) {
+                switch (this->interrupt_mode){
                     case 0:
                         this->opCode.execute(int_vector);
                         break;
@@ -144,7 +143,7 @@ void Cpu::instructionCycle(){
         }
 
         instructions++;
-        if (instructions == 1000 * 1000) {
+        if (instructions == 1000 * 1000){
             LOGDBG("1M instructions in %ld sec.", this->m_Timer->GetTime() - start);
             LOGDBG("  PC: %04x", this->special_registers.pc);
             start = this->m_Timer->GetTime();

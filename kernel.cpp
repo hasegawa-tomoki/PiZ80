@@ -123,11 +123,11 @@ TShutdownMode CKernel::RAMCheck(Cpu* cpu)
     u16 start = 0x8000;
     u16 end = 0x80ff;
     for (u16 data = 0; data < 0x100; data++){
-        for (u16 address = start; address <= end; address++) {
+        for (u16 address = start; address <= end; address++){
             Mcycle::m3(cpu, address, data);
         }
         LOGDBG("Offset: %x", data);
-        for (u16 address = start; address <= end; address++) {
+        for (u16 address = start; address <= end; address++){
             if (address % 16 == 0){
                 LOGDBG("    %04x ", address);
             }
@@ -182,10 +182,10 @@ TShutdownMode CKernel::RAMCheck(Cpu* cpu)
    ////// RAM flip check
     u16 start = 0x8000;
     u16 end = 0x80ff;
-    for (u16 address = start; address <= end; address++) {
+    for (u16 address = start; address <= end; address++){
         Mcycle::m3(&cpu, address, 0x55);
     }
-    for (u16 address = start; address <= end; address++) {
+    for (u16 address = start; address <= end; address++){
         if (address % 16 == 0){
             LOGDBG("%04x ", address);
         }

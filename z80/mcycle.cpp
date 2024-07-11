@@ -23,7 +23,7 @@ void Mcycle::int_m1t1t2t3(Cpu *cpu){
     // tw
     cpu->bus->waitClockRising(false);
     cpu->bus->waitClockFalling(false);
-    while (!cpu->bus->getInput(Bus::Z80_PIN_I_WAIT)){
+    while (! cpu->bus->getInput(Bus::Z80_PIN_I_WAIT)){
         cpu->bus->waitClockFalling(false);
     }
     // T3-rising: Fetch data. Output refresh address. Update control signals
@@ -95,12 +95,12 @@ void Mcycle::m1t2(Cpu* cpu){
     // T2: Wait memory until WAIT is inactive
     cpu->bus->waitClockRising(false);
     cpu->bus->waitClockFalling(false);
-    while (!cpu->bus->getInput(Bus::Z80_PIN_I_WAIT)){
+    while (! cpu->bus->getInput(Bus::Z80_PIN_I_WAIT)){
         cpu->bus->waitClockFalling(false);
     }
 }
 
-void Mcycle::m1t3(Cpu* cpu) {
+void Mcycle::m1t3(Cpu* cpu){
     // T3-rising: Fetch data. Output refresh address. Update control signals
     cpu->bus->waitClockRising(false);
     cpu->executing = cpu->bus->getData();
@@ -120,7 +120,7 @@ void Mcycle::m1t3(Cpu* cpu) {
     cpu->bus->syncControl();
 }
 
-void Mcycle::m1t4(Cpu* cpu) {
+void Mcycle::m1t4(Cpu* cpu){
     // T4: Inactivate MREQ, RFSH. Increment R resistor.
     cpu->bus->waitClockRising(false);
     cpu->bus->waitClockFalling(false);
@@ -150,7 +150,7 @@ u8 Mcycle::m2(Cpu* cpu, u16 addr){
     // T2
     cpu->bus->waitClockRising(false);
     cpu->bus->waitClockFalling(false);
-    while (!cpu->bus->getInput(Bus::Z80_PIN_I_WAIT)){
+    while (! cpu->bus->getInput(Bus::Z80_PIN_I_WAIT)){
         cpu->bus->waitClockFalling(false);
     }
     // T3
@@ -183,7 +183,7 @@ void Mcycle::m3(Cpu* cpu, u16 addr, u8 data){
     // T2
     cpu->bus->waitClockRising(false);
     cpu->bus->waitClockFalling(false);
-    while (!cpu->bus->getInput(Bus::Z80_PIN_I_WAIT)){
+    while (! cpu->bus->getInput(Bus::Z80_PIN_I_WAIT)){
         cpu->bus->waitClockFalling(false);
     }
     cpu->bus->pin_o_wr = Bus::PIN_LOW;
@@ -214,7 +214,7 @@ u8 Mcycle::in(Cpu* cpu, u8 portL, u8 portH){
     // TW
     cpu->bus->waitClockRising(true);
     cpu->bus->waitClockFalling(true);
-    while (!cpu->bus->getInput(Bus::Z80_PIN_I_WAIT)){
+    while (! cpu->bus->getInput(Bus::Z80_PIN_I_WAIT)){
         cpu->bus->waitClockFalling(false);
     }
     // T3
@@ -247,7 +247,7 @@ void Mcycle::out(Cpu* cpu, u8 portL, u8 portH, u8 data){
     // TW
     cpu->bus->waitClockRising(true);
     cpu->bus->waitClockFalling(true);
-    while (!cpu->bus->getInput(Bus::Z80_PIN_I_WAIT)){
+    while (! cpu->bus->getInput(Bus::Z80_PIN_I_WAIT)){
         cpu->bus->waitClockFalling(false);
     }
     // T3

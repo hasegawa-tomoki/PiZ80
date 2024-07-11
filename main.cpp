@@ -9,7 +9,7 @@ int main (void)
 	// cannot return here because some destructors used in CKernel are not implemented
 
 	CKernel Kernel;
-	if (!Kernel.Initialize ())
+	if (! Kernel.Initialize ())
 	{
 		halt ();
 		return EXIT_HALT;

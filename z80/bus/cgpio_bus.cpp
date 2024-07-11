@@ -18,7 +18,7 @@ CGpioBus::CGpioBus()
 {
     // Initialize GPIOs for output
     LOGDBG("Initializing GPIOs for output");
-    for (int i = 0; i <= 7; i++) {
+    for (int i = 0; i <= 7; i++){
         LOGDBG("  RPi.OUT%d = GPIO %d", i, CGpioBus::RPi_BUS_OUT[i]);
         m_OUT[i] = CGPIOPin(CGpioBus::RPi_BUS_OUT[i], GPIOModeOutput);
         m_OUT[i].Write(LOW);
@@ -40,7 +40,7 @@ CGpioBus::CGpioBus()
     latchHold(LATCH_DATA);
 
     // Control initialize
-    for (int i = 0; i <= 7; i++) {
+    for (int i = 0; i <= 7; i++){
         m_OUT[i].Write(HIGH);
     }
     latchHold(LATCH_CONTROL_OUTPUT);
@@ -50,7 +50,7 @@ CGpioBus::CGpioBus()
  * @param device LATCH_ADDRESS_LOW|LATCH_ADDRESS_HIGH|LATCH_CONTROL_OUTPUT|LATCH_DATA
  */
 void CGpioBus::latchHold(u8 device){
-    switch (device) {
+    switch (device){
         case LATCH_ADDRESS_LOW:
             m_LE_ADDR_LOW.Write(LATCH_TRANSPARENT);
             m_LE_ADDR_LOW.Write(LATCH_HOLDING);
@@ -76,7 +76,7 @@ void CGpioBus::latchHold(u8 device){
  * @param device BUS_TRANSCEIVER_DATA|BUS_TRANSCEIVER_CONTROL
  */
 void CGpioBus::selectInput(u8 device){
-    switch (device) {
+    switch (device){
         case BUS_TRANSCEIVER_DATA:
             if (inputMode != BUS_TRANSCEIVER_DATA){
                 m_OE_CTRL_IN.Write(BUS_TRANSCEIVER_ISOLATED);
@@ -145,7 +145,7 @@ void CGpioBus::setAddress(u16 addr){
         latchHold(LATCH_ADDRESS_HIGH);
     }
     // Lower 8bit of address to GPIO 0 - 7
-    if ((addr & 0x00ff) != (this->address & 0x00ff)) {
+    if ((addr & 0x00ff) != (this->address & 0x00ff)){
         u32 lower = 0;
         for (u8 i = 0; i <= 7; i++){
             lower |= ((addr >> i) & 0x01) << CGpioBus::RPi_BUS_OUT[i];
