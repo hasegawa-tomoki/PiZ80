@@ -11,8 +11,8 @@ CKernel::CKernel()
 :	m_Screen(m_Options.GetWidth(), m_Options.GetHeight()),
     m_Serial(&m_Interrupt, TRUE),
 	m_Timer(&m_Interrupt),
-	m_Logger(m_Options.GetLogLevel(), &m_Timer)
-	// TODO: add more member initializers here
+	m_Logger(m_Options.GetLogLevel(), &m_Timer),
+    m_USBHCI (&m_Interrupt, &m_Timer)
 {
 }
 
@@ -44,7 +44,10 @@ boolean CKernel::Initialize()
         bOK = m_Timer.Initialize ();
     }
 
-    // TODO: call Initialize () of added members here (if required)
+    if (bOK)
+    {
+        bOK = m_USBHCI.Initialize ();
+    }
 
     return bOK;
 }
@@ -76,8 +79,14 @@ TShutdownMode CKernel::Run()
 
 TShutdownMode CKernel::MemoryDump(Cpu* cpu)
 {
-    u16 from = 0x0070;
-    u16 to = 0x009f;
+    #define PARTITION	"umsd1-1"
+    #define FILENAME	"dump.txt"
+
+    u16 from = 0x0000;
+    u16 to = 0x7fff;
+
+    unsigned hFile = openFile();
+
     for (u16 addr = from; addr <= to; addr += 16){
         CString buffer;
         buffer.Format("%04x ", addr);
@@ -88,10 +97,47 @@ TShutdownMode CKernel::MemoryDump(Cpu* cpu)
             buffer.Append(byteString);
         }
         LOGDBG(buffer);
+        buffer.Append("\n");
+        m_FileSystem.FileWrite(hFile, buffer, buffer.GetLength());
     }
+
+    closeFile(hFile);
+
     return ShutdownHalt;
 }
 
+unsigned CKernel::openFile()
+{
+    // Mount file system
+    CDevice *pPartition = m_DeviceNameService.GetDevice(PARTITION, TRUE);
+    if (pPartition == 0)
+    {
+        LOGPANIC("Partition not found: %s", PARTITION);
+    }
+
+    if (! m_FileSystem.Mount(pPartition))
+    {
+        LOGPANIC("Cannot mount partition: %s", PARTITION);
+    }
+
+    unsigned hFile = m_FileSystem.FileCreate (FILENAME);
+    if (hFile == 0)
+    {
+        LOGPANIC("Cannot create file: %s", FILENAME);
+    }
+
+    return hFile;
+}
+
+void CKernel::closeFile(unsigned hFile)
+{
+    if (!m_FileSystem.FileClose(hFile))
+    {
+        LOGPANIC("Cannot close file");
+    }
+
+    m_FileSystem.UnMount();
+}
 
 TShutdownMode CKernel::ROMCheck(Cpu* cpu)
 {
