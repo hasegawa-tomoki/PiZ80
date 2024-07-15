@@ -123,10 +123,11 @@ void Mcycle::m1t3(Cpu* cpu){
 void Mcycle::m1t4(Cpu* cpu){
     // T4: Inactivate MREQ, RFSH. Increment R resistor.
     cpu->bus->waitClockRising(false);
-    cpu->bus->waitClockFalling(false);
+    cpu->bus->waitClockFalling(true);
     cpu->bus->pin_o_mreq = Bus::PIN_HIGH;
     cpu->bus->syncControl();
 
+    // No syncControl() to deactivate RFSH in the next cycle
     cpu->bus->pin_o_rfsh = Bus::PIN_HIGH;
 
     u8 r1 = (cpu->special_registers.r & 0b10000000);
